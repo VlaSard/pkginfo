@@ -1,0 +1,19 @@
+2023-01-16  VlaSard
+
+	* src/Show package info : update start scrits
+
+2023-01-15  VlaSard
+
+	* po/ru.po :russian translation,
+	* install.sh :instalation script
+
+2023-01-14  VlaSard
+
+	* src/pkg_info :viewer info package,
+	* src/Show package info :start script,
+	* README.md :readme
+
+2023-01-14  VlaSard
+
+	* Init project pkg_info
+

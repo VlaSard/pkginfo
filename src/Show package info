@@ -1,0 +1,14 @@
+#! /usr/bin/env bash
+# -*- mode: sh -*-
+#
+# startup script depending on the session
+# script is used in gnome environment
+
+# package file alias
+PKG_FILE=$1
+
+# for other sessions, change the case block
+case $XDG_SESSION_TYPE in
+    wayland) GDK_BACKEND=x11 pkg_info "$PKG_FILE" ;;
+    *) pkg_info "$PKG_FILE" ;;
+esac

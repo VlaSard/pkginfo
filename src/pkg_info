@@ -1,0 +1,39 @@
+#! /usr/bin/env bash
+# -*- mode: sh -*-
+#
+# Title:        pkginfo
+# Author:       VlaSard
+# Description:  Reads package information from a package file,
+#               and displays it in the YAD window.
+# Dependencies: yad 12.3 (GTK+ 3.24.36), pacman v6.0.2
+
+TEXTDOMAIN=pkg_info
+TEXTDOMAINDIR=$HOME/.local/share/locale
+
+# YAD_OPTIONS="--window-icon='package-manager-icon' --name='pkgInfo'"
+
+KEY=$RANDOM
+
+PKGFILE=$1 # file package alias
+
+# info tab
+pacman -Qip "$PKGFILE" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
+  yad --plug=$KEY --tabnum=1 --image="package-x-generic" --text=$"Package info" \
+    --list --no-selection --grid-lines=vert --no-click --no-headers \
+    --column="Parameter" --column="Value" &
+
+# files tab
+pacman -Qlp "$PKGFILE" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
+  yad --plug=$KEY --tabnum=2 --image="folder" --text=$"File list package" \
+    --list --no-selection --grid-lines=hor --no-click --no-headers \
+    --column="Files" &
+
+# main dialog
+msg_1=$"Package information"
+msg_2=$"package file"
+TXT="<b>$msg_1</b>\\n\\n\\t$msg_2:\\t<i>$(basename "$PKGFILE")</i>\\n"
+# TXT+=$"\\tpackage file:\\t<i>$(basename "$PKGFILE")</i>\\n"
+
+yad --name=pkgInfo --window-icon="package-x-generic" --center \
+  --width=800 --height=600 --title=$"Package Info" --button="yad-close" \
+  --text="$TXT" --notebook --key=$KEY --tab=$"Info" --tab=$"Files"
