@@ -53,7 +53,7 @@ The script does not check dependencies. You need to convince yourself of this. I
 The translation files are located in the po directory. To install localization, run the command (for Russian translation)
 
 ```
-mkdir -p $HOME/.local/share/locale/en/LC_MESSAGES
+mkdir -p $HOME/.local/share/locale/ru/LC_MESSAGES
 msgfmt -o $HOME/.local/share/locale/ru/LC_MESSAGES/pkg_info.mo ru.po
 ```
 

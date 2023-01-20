@@ -1,3 +1,10 @@
+2023-01-20  VlaSard
+
+	* src/pkg_info : added bookmarks, information is displayed in different tabs, it became possible to go to the package page and write a letter to the maintainer of the package
+	* po/ru.po : updated translation
+	* po/uk.po : removed Ukrainian translation, as not relevant
+	* po/pkg_info.pot : added template for translation
+
 2023-01-16  VlaSard
 
 	* src/Show package info : update start scrits

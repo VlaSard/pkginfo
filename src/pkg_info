@@ -1,39 +1,119 @@
-#! /usr/bin/env bash
+#! /bin/bash
 # -*- mode: sh -*-
 #
-# Title:        pkginfo
+# Title:        pkg_info
 # Author:       VlaSard
 # Description:  Reads package information from a package file,
 #               and displays it in the YAD window.
-# Dependencies: yad 12.3 (GTK+ 3.24.36), pacman v6.0.2
+# Dependencies: Pacman v6.0.2 - libalpm v13.0.2,
+#               yad 12.3 (GTK+ 3.24.36),
+#               sed (GNU sed) 4.9,
+#               geary 43.0,
+#               Mozilla Firefox 109.0
 
 TEXTDOMAIN=pkg_info
 TEXTDOMAINDIR=$HOME/.local/share/locale
 
-# YAD_OPTIONS="--window-icon='package-manager-icon' --name='pkgInfo'"
+# gsettings set yad.settings terminal 'bash -c "%s"'
 
-KEY=$RANDOM
+trap 'kill $KEY' EXIT
 
-PKGFILE=$1 # file package alias
+# KEY value is equal to PID
+KEY=$$
 
-# info tab
-pacman -Qip "$PKGFILE" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
-  yad --plug=$KEY --tabnum=1 --image="package-x-generic" --text=$"Package info" \
-    --list --no-selection --grid-lines=vert --no-click --no-headers \
-    --column="Parameter" --column="Value" &
+# file package alias
+PKGFILE=$1
 
-# files tab
-pacman -Qlp "$PKGFILE" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
-  yad --plug=$KEY --tabnum=2 --image="folder" --text=$"File list package" \
-    --list --no-selection --grid-lines=hor --no-click --no-headers \
-    --column="Files" &
+# get package information
+FILESPACK=$(pacman -Qlp "$PKGFILE")
+INFOPACK=$(pacman -Qip "$PKGFILE")
+
+# parse the received information
+DESC=$(echo "$INFOPACK" | sed -n 's/.*: //; 3p') &&
+  INFOPACK=$(echo "$INFOPACK" | sed '3d')
+PROVIDES=$(echo "$INFOPACK" | sed -n 's/.*: //; 7p') &&
+  INFOPACK=$(echo "$INFOPACK" | sed '7d')
+DEPEND=$(echo "$INFOPACK" | sed -n '/^[ \t]/p; 7,8p') &&
+  INFOPACK=$(echo "$INFOPACK" | sed -n '7,8d; /^[ \t]/!p')
+CONFLICT="$(echo "$INFOPACK" | sed -n 's/.*: //; 7p')" &&
+  INFOPACK=$(echo "$INFOPACK" | sed '7d')
+REPLACES=$(echo "$INFOPACK" | sed -n 's/.*: //; 7p') &&
+  INFOPACK=$(echo "$INFOPACK" | sed '7d')
+
+pagemail() {
+  STR=$(
+    echo "$2" |
+      grep -Eo "\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b"
+  )
+  if [ "$STR" ]; then
+    geary mailto:"$STR"
+  fi
+  STR="$(echo "$2" | grep http)"
+  if [ "$STR" ]; then
+    firefox "$STR"
+  fi
+}
+export -f pagemail
+
+# Info tab
+echo "$INFOPACK" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
+  yad --plug=$KEY --tabnum=1 \
+    --list --grid-lines=vert --print-column=1 \
+    --dclick-action='bash -c "pagemail %s"' \
+    --image="package-x-generic" --text=$"Package info" \
+    --no-headers --column="name" --column="description" &
+
+# Provides tab
+echo "$PROVIDES" | sed 's/ \{1,\}/\n/g' |
+  yad --plug=$KEY --tabnum=2 \
+    --list --no-selection --grid-lines=hor --no-headers \
+    --image="package-x-generic" --text=$"Package provides" \
+    --column="package" &
+
+# Depends tab
+echo "$DEPEND" | sed 's/^[ ]/ :/; s/:[ ]*/\n/; s/  /\n\n/6g' |
+  yad --plug=$KEY --tabnum=3 \
+    --list --no-selection --grid-lines=vert --no-headers \
+    --image="package-x-generic" --text=$"Package dependencies" \
+    --column="name" --column="description" &
+
+# Conflict tab
+echo "$CONFLICT" | sed 's/ \{1,\}/\n/g' |
+  yad --plug=$KEY --tabnum=4 \
+    --list --no-selection --grid-lines=hor --no-headers \
+    --image="package-x-generic" --text=$"Conflicts with" \
+    --column="package" &
+
+# Replaces tab
+echo "$REPLACES" | sed 's/ \{1,\}/\n/g' |
+  yad --plug=$KEY --tabnum=5 \
+    --list --no-selection --grid-lines=hor --no-headers \
+    --image="package-x-generic" --text=$"Package replaces" \
+    --column="package" &
+
+# Files tab
+echo "$FILESPACK" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
+  yad --plug=$KEY --tabnum=6 \
+    --list --no-selection --grid-lines=hor --no-headers \
+    --image="folder" --text=$"File list package" \
+    --column="files" &
+
+# get header main dialog
+line1=$"Package information"
+line2=$"package file"
+line3=$"description"
+HEADER="<b>$line1</b>\\n\\n"
+HEADER+="\\t$line2:\\t<i>$(basename "$PKGFILE")</i>\\n"
+HEADER+="\\t$line3:\\t$DESC\\n"
 
 # main dialog
-msg_1=$"Package information"
-msg_2=$"package file"
-TXT="<b>$msg_1</b>\\n\\n\\t$msg_2:\\t<i>$(basename "$PKGFILE")</i>\\n"
-# TXT+=$"\\tpackage file:\\t<i>$(basename "$PKGFILE")</i>\\n"
-
-yad --name=pkgInfo --window-icon="package-x-generic" --center \
-  --width=800 --height=600 --title=$"Package Info" --button="yad-close" \
-  --text="$TXT" --notebook --key=$KEY --tab=$"Info" --tab=$"Files"
+yad --title=$"Package Info" --key=$KEY --width=800 --height=600 \
+  --window-icon="package-x-generic" --text="$HEADER" \
+  --button="yad-close" \
+  --notebook \
+  --tab=$"Info" \
+  --tab=$"Provides" \
+  --tab=$"Depends" \
+  --tab=$"Conflicts" \
+  --tab=$"Replaces" \
+  --tab=$"Files"

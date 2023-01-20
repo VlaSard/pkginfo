@@ -1,0 +1,48 @@
+#: pkg_info:63
+msgid "Package info"
+msgstr ""
+#: pkg_info:70
+msgid "Package provides"
+msgstr ""
+#: pkg_info:77
+msgid "Package dependencies"
+msgstr ""
+#: pkg_info:84
+msgid "Conflicts with"
+msgstr ""
+#: pkg_info:91
+msgid "Package replaces"
+msgstr ""
+#: pkg_info:98
+msgid "File list package"
+msgstr ""
+#: pkg_info:102
+msgid "Package information"
+msgstr ""
+#: pkg_info:103
+msgid "package file"
+msgstr ""
+#: pkg_info:104
+msgid "description"
+msgstr ""
+#: pkg_info:110
+msgid "Package Info"
+msgstr ""
+#: pkg_info:114
+msgid "Info"
+msgstr ""
+#: pkg_info:115
+msgid "Provides"
+msgstr ""
+#: pkg_info:116
+msgid "Depends"
+msgstr ""
+#: pkg_info:117
+msgid "Conflicts"
+msgstr ""
+#: pkg_info:118
+msgid "Replaces"
+msgstr ""
+#: pkg_info:119
+msgid "Files"
+msgstr ""
