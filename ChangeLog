@@ -1,3 +1,11 @@
+2023-01-21  VlaSard
+
+	* src/ : deleted
+	* po/ : update files
+	* bin/pkg_info : added call from command line, added a link to the project page, added transition to the email address in the mailer, small design changes
+	* nautilus/ : added script directory for nautilus
+
+
 2023-01-20  VlaSard
 
 	* src/pkg_info : added bookmarks, information is displayed in different tabs, it became possible to go to the package page and write a letter to the maintainer of the package

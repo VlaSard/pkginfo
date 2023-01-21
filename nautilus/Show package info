@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/sh
 # -*- mode: sh -*-
 #
 # startup script depending on the session
@@ -9,6 +9,6 @@ PKG_FILE=$1
 
 # for other sessions, change the case block
 case $XDG_SESSION_TYPE in
-    wayland) GDK_BACKEND=x11 pkg_info "$PKG_FILE" ;;
-    *) pkg_info "$PKG_FILE" ;;
+    wayland) GDK_BACKEND=x11 pkg_info -p "$PKG_FILE" ;;
+    *) pkg_info -p "$PKG_FILE" ;;
 esac

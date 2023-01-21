@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/bash
 # -*- mode: sh -*-
 #
 # Title:        pkg_info
@@ -8,25 +8,102 @@
 # Dependencies: Pacman v6.0.2 - libalpm v13.0.2,
 #               yad 12.3 (GTK+ 3.24.36),
 #               sed (GNU sed) 4.9,
-#               geary 43.0,
-#               Mozilla Firefox 109.0
 
-TEXTDOMAIN=pkg_info
-TEXTDOMAINDIR=$HOME/.local/share/locale
-
-# gsettings set yad.settings terminal 'bash -c "%s"'
+# gettext initialization
+export TEXTDOMAIN='pkg_info'
+export TEXTDOMAINDIR='/usr/share/locale'
 
 trap 'kill $KEY' EXIT
+
+PKGINFO_VERSION='20230121'
+PKGINFO_NAME="$(basename "$0")"
 
 # KEY value is equal to PID
 KEY=$$
 
-# file package alias
-PKGFILE=$1
+usage() {
+  printf "pkg_info %s" "$PKGINFO_VERSION"
+  echo
+  printf $"Usage: %s [options]\n" "$PKGINFO_NAME"
+  echo
+  printf -- $"Options:""\n"
+  printf -- "  -p FILE        "$"read package information from the package file""\n"
+  echo
+  printf -- "  -h, --help     "$"display this help and exit""\n"
+  printf -- "      --version  "$"output version information and exit""\n"
+  echo
+}
+
+version() {
+  printf "pkg_info %s\n" "$PKGINFO_VERSION"
+  printf -- "Copyright (c) 2023 Vladimir Sarachan <sarachanvv@gmail.com>.\n"
+  echo
+  printf -- "This is free software;""\n"
+  printf -- "This program is distributed WITHOUT ANY WARRANTY"
+  echo
+}
+
+pagemail() {
+  STR=$(
+    echo "$2" |
+      grep -Eo "\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b"
+  )
+  if [ "$STR" ]; then
+    xdg-open malto:"$STR"
+  fi
+  STR="$(echo "$2" | grep http)"
+  if [ "$STR" ]; then
+    xdg-open "$STR"
+  fi
+}
+export -f pagemail
+
+# parse CLI
+if [ $# -eq 0 ]; then
+  printf $"%s: missing operand\n" "$PKGINFO_NAME"
+  printf $"Try «%s --help» for more information." "$PKGINFO_NAME"
+  echo
+  exit
+fi
+while test $# -gt 0; do
+  case "$1" in
+  -p)          shift; PKGFILE=$1; PKEY="p" ;;
+  -h | --help) usage; exit ;;
+  --version)   version; exit ;;
+  -*)          usage; exit ;;
+  *)           PKGFILE=$1; PKEY=''; break ;;
+  esac
+  shift
+done
 
 # get package information
-FILESPACK=$(pacman -Qlp "$PKGFILE")
-INFOPACK=$(pacman -Qip "$PKGFILE")
+if [ ! "$PKEY" ]; then
+  PKGNAME=$(pacman -Q "$PKGFILE" 2>/dev/null)
+  res_code=$?
+  if [ $res_code = 1 ]; then
+    printf $"%s: package «%s» not found" "$PKGINFO_NAME" "$PKGFILE"
+    echo
+    exit
+  fi
+  D_PACK=$"package"
+else
+  if [ -f "$PKGFILE" ]; then
+    PKGNAME=$(basename "$PKGFILE")
+    D_PACK=$"package file"
+  else
+    printf $"%s: file not found" "$PKGINFO_NAME"
+    echo
+    exit
+  fi
+fi
+INFOPACK=$(eval pacman -Qi"$PKEY" "$PKGFILE" 2>/dev/null)
+  res_code=$?
+  if [ $res_code = 1 ]; then
+    printf $"%s: file «%s» is not a package file" "$PKGINFO_NAME" "$PKGNAME"
+    echo
+    exit
+  fi
+FILESPACK=$(eval pacman -Ql"$PKEY" "$PKGFILE")
 
 # parse the received information
 DESC=$(echo "$INFOPACK" | sed -n 's/.*: //; 3p') &&
@@ -40,22 +117,9 @@ CONFLICT="$(echo "$INFOPACK" | sed -n 's/.*: //; 7p')" &&
 REPLACES=$(echo "$INFOPACK" | sed -n 's/.*: //; 7p') &&
   INFOPACK=$(echo "$INFOPACK" | sed '7d')
 
-pagemail() {
-  STR=$(
-    echo "$2" |
-      grep -Eo "\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b"
-  )
-  if [ "$STR" ]; then
-    geary mailto:"$STR"
-  fi
-  STR="$(echo "$2" | grep http)"
-  if [ "$STR" ]; then
-    firefox "$STR"
-  fi
-}
-export -f pagemail
+# INFORMATION BOX
 
-# Info tab
+# info tab
 echo "$INFOPACK" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
   yad --plug=$KEY --tabnum=1 \
     --list --grid-lines=vert --print-column=1 \
@@ -63,35 +127,35 @@ echo "$INFOPACK" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
     --image="package-x-generic" --text=$"Package info" \
     --no-headers --column="name" --column="description" &
 
-# Provides tab
+# provides tab
 echo "$PROVIDES" | sed 's/ \{1,\}/\n/g' |
   yad --plug=$KEY --tabnum=2 \
     --list --no-selection --grid-lines=hor --no-headers \
     --image="package-x-generic" --text=$"Package provides" \
     --column="package" &
 
-# Depends tab
+# depends tab
 echo "$DEPEND" | sed 's/^[ ]/ :/; s/:[ ]*/\n/; s/  /\n\n/6g' |
   yad --plug=$KEY --tabnum=3 \
     --list --no-selection --grid-lines=vert --no-headers \
     --image="package-x-generic" --text=$"Package dependencies" \
     --column="name" --column="description" &
 
-# Conflict tab
+# conflict tab
 echo "$CONFLICT" | sed 's/ \{1,\}/\n/g' |
   yad --plug=$KEY --tabnum=4 \
     --list --no-selection --grid-lines=hor --no-headers \
     --image="package-x-generic" --text=$"Conflicts with" \
     --column="package" &
 
-# Replaces tab
+# replaces tab
 echo "$REPLACES" | sed 's/ \{1,\}/\n/g' |
   yad --plug=$KEY --tabnum=5 \
     --list --no-selection --grid-lines=hor --no-headers \
     --image="package-x-generic" --text=$"Package replaces" \
     --column="package" &
 
-# Files tab
+# files tab
 echo "$FILESPACK" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
   yad --plug=$KEY --tabnum=6 \
     --list --no-selection --grid-lines=hor --no-headers \
@@ -99,17 +163,16 @@ echo "$FILESPACK" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
     --column="files" &
 
 # get header main dialog
-line1=$"Package information"
-line2=$"package file"
-line3=$"description"
-HEADER="<b>$line1</b>\\n\\n"
-HEADER+="\\t$line2:\\t<i>$(basename "$PKGFILE")</i>\\n"
-HEADER+="\\t$line3:\\t$DESC\\n"
+D_NAME=$"Package information"
+D_DESC=$"description"
+HEADER="<b>$D_NAME</b>\\n\\n"
+HEADER+="\\t$D_PACK:\\t<i>$PKGNAME</i>\\n"
+HEADER+="\\t$D_DESC:\\t$DESC\\n"
 
 # main dialog
 yad --title=$"Package Info" --key=$KEY --width=800 --height=600 \
   --window-icon="package-x-generic" --text="$HEADER" \
-  --button="yad-close" \
+  --button="yad-close:1" \
   --notebook \
   --tab=$"Info" \
   --tab=$"Provides" \
