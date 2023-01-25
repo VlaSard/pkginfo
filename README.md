@@ -1,5 +1,7 @@
 # pkginfo
 
+<img src="https://github.com/VlaSard/pkginfo/blob/main/images/screen01.png" height="400">
+
 ## Description
 
 Displays package information in a graphical window. It can show information about both installed packages and packages in files.
