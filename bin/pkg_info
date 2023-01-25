@@ -15,7 +15,7 @@ export TEXTDOMAINDIR='/usr/share/locale'
 
 trap 'kill $KEY' EXIT
 
-PKGINFO_VERSION='20230121'
+PKGINFO_VERSION='20230125'
 PKGINFO_NAME="$(basename "$0")"
 
 # KEY value is equal to PID
