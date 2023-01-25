@@ -49,7 +49,7 @@ pagemail() {
       grep -Eo "\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b"
   )
   if [ "$STR" ]; then
-    xdg-open malto:"$STR"
+    xdg-open mailto:"$STR"
   fi
   STR="$(echo "$2" | grep http)"
   if [ "$STR" ]; then
