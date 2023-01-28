@@ -1,6 +1,6 @@
 # pkginfo
 
-<img src="https://github.com/VlaSard/pkginfo/blob/main/images/screen01.png" height="400">
+<img src="https://github.com/VlaSard/pkginfo/blob/main/screenshot/screen01.png" height="400">
 
 ## Description
 

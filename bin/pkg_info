@@ -15,7 +15,7 @@ export TEXTDOMAINDIR='/usr/share/locale'
 
 trap 'kill $KEY' EXIT
 
-PKGINFO_VERSION='20230125'
+PKGINFO_VERSION='20230128'
 PKGINFO_NAME="$(basename "$0")"
 
 # KEY value is equal to PID
@@ -85,7 +85,7 @@ if [ ! "$PKEY" ]; then
     echo
     exit
   fi
-  D_PACK=$"package"
+  D_PACK=$"package""\t"
 else
   if [ -f "$PKGFILE" ]; then
     PKGNAME=$(basename "$PKGFILE")
@@ -166,8 +166,8 @@ echo "$FILESPACK" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
 D_NAME=$"Package information"
 D_DESC=$"description"
 HEADER="<b>$D_NAME</b>\\n\\n"
-HEADER+="\\t$D_PACK:\\t<i>$PKGNAME</i>\\n"
-HEADER+="\\t$D_DESC:\\t$DESC\\n"
+HEADER+="\\t$D_PACK\\t<i>$PKGNAME</i>\\n"
+HEADER+="\\t$D_DESC\\t$DESC\\n"
 
 # main dialog
 yad --title=$"Package Info" --key=$KEY --width=800 --height=600 \
@@ -180,3 +180,8 @@ yad --title=$"Package Info" --key=$KEY --width=800 --height=600 \
   --tab=$"Conflicts" \
   --tab=$"Replaces" \
   --tab=$"Files"
+
+exit_code=$?
+[[ $exit_code -eq 1 ]] || [[ $exit_code -eq 252 ]] && exit_code=0
+
+exit $exit_code
