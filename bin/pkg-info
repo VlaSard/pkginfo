@@ -1,0 +1,362 @@
+#!/usr/bin/bash
+# -*- mode: sh -*-
+#
+# NAME:         pkgInfo - Package information viewer
+# VERSION:      20230304
+# AUTHOR:       (c) 2023 VlaSard
+# DEPENDENCIES: Pacman v6.0.2 - libalpm v13.0.2,
+#               yad 12.3 (GTK+ 3.24.36),
+#               sed (GNU sed) 4.9
+# DESCRIPTON:   Reads package information from a package file,
+#               and displays it in the YAD window.
+#
+# LICENSE:      GNU GPLv3 (http://www.gnu.de/documents/gpl-3.0.en.html)
+#
+# NOTICE:       THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
+#               EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+#               PROVIDE THE PROGRAM “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
+#               IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+#               AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND
+#               PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE,
+#               YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+#
+#               IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY
+#               COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS THE PROGRAM AS
+#               PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
+#               INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+#               THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED
+#               INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE
+#               PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER
+#               PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+#
+# USAGE:        pkg-info [options] FILE or PACKAGE NAME
+
+# gettext initialization
+export TEXTDOMAIN='pkg-info'
+export TEXTDOMAINDIR='/usr/share/locale'
+
+# key value is equal to PID
+key=$$
+
+trap Cleaning EXIT
+
+Init() {
+  pkg_info_version='20230304'
+  pkg_info_name="$(basename "$0")"
+  prog_name='pkgInfo'
+  export dependencies=''
+
+  CheckDependencies
+
+  export messageUsage=''
+  export messageVersion=''
+  export pkg_name=''
+  export pkg_key=''
+
+  CliParse "$@"
+
+  export tab_style=''
+  export pack_type=''
+  export pack_name=''
+  export info_package=''
+  export files_package=''
+  export package_description=''
+  export package_provides=''
+  export package_depend=''
+  export package_conflict=''
+  export package_replaces=''
+
+  SetStyle
+
+  export YAD_OPTIONS="--class $prog_name --window-icon package-x-generic --use-interp"
+
+  export -f OpenPageOrEmail
+  tmp_file=$(mktemp "${TMP:-/tmp}"/pkg-info.XXXXXXXX)
+}
+
+# Check dependencies
+CheckDependencies() {
+  deps='pacman yad sed'
+
+  for i in $deps; do
+    type "$i" >/dev/null 2>&1
+    codeType=$?
+    if [ $codeType != 0 ]; then
+      dependencies="${dependencies} $i"
+    fi
+  done
+
+  if [[ -n "$dependencies" ]]; then
+    Exit 1 "pkg-info: $(gettext "missing dependencies. Install the following"):${dependencies}"
+  fi
+}
+
+# Set the style options
+# RETURN: variable containing the css style
+SetStyle() {
+  tab_style=$(
+    cat <<EOF
+notebook header tab {
+  border: 1px solid shade(#666B6D, 0.6);
+}
+notebook label {
+  padding: 2px 8px;
+}
+notebook header.top tab:not(:checked) {
+  margin: 2px -1px -1px 0; border-radius: 6px 6px 0 0;
+}
+notebook header.top tab:checked {
+  margin: 0 -1px -1px 0; border-radius: 6px 6px 0 0;
+  border-top: 1px solid shade(#666B6D, 0.6); border-bottom: 1px solid #666B6D
+}
+notebook > stack:not(:only-child) {
+  border: 1px solid shade(#666B6D, 0.6);
+}
+.frame {
+  border: 0;
+}
+EOF
+  )
+}
+
+# Output the usage message
+# VARIABLES: pkg_info_version - version of the script, set in Init
+#            pkg_info_name - script name, set in Init
+# RETURN:    usage message
+InfoUsage() {
+  messageUsage="pkg-info $pkg_info_version\n"
+  messageUsage="${messageUsage}$(gettext "Usage"): $pkg_info_name $(gettext "[options]")\n\n"
+  messageUsage="${messageUsage}$(gettext "Options"):\n"
+  messageUsage="${messageUsage}  -p FILE        $(gettext "read package information from the package file")\n"
+  messageUsage="${messageUsage}  -h, --help     $(gettext "display this help and exit")\n"
+  messageUsage="${messageUsage}      --version  $(gettext "output version information and exit")\n"
+}
+
+# Output the version message
+# VARIABLES: pkg_info_version - version of the script, set in Init
+# RETURN:    version message
+InfoVersion() {
+  messageVersion="pkg-info: version $pkg_info_version\n"
+  messageVersion="${messageVersion}Copyright (c) 2023 VlaSard <vlasard@petalmail.com>.\n"
+  messageVersion="${messageVersion}\nThis is free software;\n"
+  messageVersion="${messageVersion}This program is distributed WITHOUT ANY WARRANTY\n"
+}
+
+# Parse CLI
+# VARIABLES:  pkg_info_name - script name, set in Init
+# RETURNS:    pkg_name - package name or file name
+#             pkg_key - package or file key
+CliParse() {
+  if [ $# -eq 0 ]; then
+    # badOperand="pkg-info: missing operand\n"
+    # badOperand="${badOperand}Try «pkg-info --help» for more information."
+    Exit "$(gettext "pkg-info: missing operand\nTry «pkg-info --help» for more information.")"
+  fi
+
+  while test $# -gt 0; do
+    case "$1" in
+      -p)
+        shift
+        pkg_name=$1
+        pkg_key="p"
+        ;;
+      -h | --help)
+        InfoUsage
+        Exit 0 "$messageUsage"
+        ;;
+      --version)
+        InfoVersion
+        Exit 0 "$messageVersion"
+        ;;
+      -*)
+        InfoUsage
+        Exit 0 "$messageUsage"
+        ;;
+      *)
+        pkg_name=$1
+        pkg_key=''
+        break
+        ;;
+    esac
+    shift
+  done
+}
+
+# Open a project page or send an email
+# ARGUMENTS:  [$1] name column - unused
+#             [$2] line URL or email address
+# RETURNS:    open web browser or email
+OpenPageOrEmail() {
+  line="$2"
+
+  email_line=$(echo "$line" |
+    grep -Eo "\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b")
+  test "$email_line" && xdg-open mailto:"$email_line"
+
+  uri_line=$(echo "$line" | grep http)
+  test "$uri_line" && xdg-open "$uri_line"
+}
+
+# Get information about the package
+# VARIABLES:  pkg_info_version - version of the script, set in Init
+# ARGUMENTS:  [$1] name of the package or the file containing the package
+# RETURNS:    pack_name - package name
+#             pack_type - package type: 'package' or 'package file'
+#             info_package - package information and
+#             files_package - package files
+GetPackageInfo() {
+  local package_name=$1
+
+  if [ ! "$pkg_key" ]; then
+    pack_name=$(pacman -Q "${package_name}" 2>/dev/null)
+    res_code=$?
+    if [ $res_code = 1 ]; then
+      Exit "$pkg_info_name: $(gettext "package") ${package_name} $(gettext "not found")"
+    fi
+    pack_type="$(gettext "package")\t"
+
+  else
+    if [ -f "$package_name" ]; then
+      pack_name=$(basename "$package_name")
+      pack_type="$(gettext "package file")"
+
+    else
+      Exit "$pkg_info_name: $(gettext "file not found")"
+    fi
+  fi
+
+  info_package=$(eval pacman -Qi${pkg_key} "${package_name}" 2>/dev/null)
+  res_code=$?
+  if [ $res_code = 1 ]; then
+    Exit "$pkg_info_name: $(gettext "file") «${package_name}» $(gettext "is not a package file.")"
+  fi
+
+  # Because of the long list of files in some packages,
+  # we save the list of files to a temporary file.
+  # files_package=$(eval pacman -Ql${pkg_key} "${package_name}" 2>/dev/null)
+  eval pacman -Ql${pkg_key} "${package_name}" >"$tmp_file"
+}
+
+# Parsing information about the package
+# VARIABLES:  info_package - information the package, set in getPackageInfo
+# ARGUMENTS:  [$1] package name
+# RETURNS:    package_description
+#             package_provides
+#             package_depend
+#             package_conflict
+#             package_replaces
+ParsePackageInfo() {
+  local package_name=$1
+  GetPackageInfo "$package_name"
+
+  # parse the received information
+  package_description=$(echo "$info_package" | sed -n 's/.*: //; 3p') &&
+    info_package=$(echo "$info_package" | sed '3d')
+
+  package_provides=$(echo "$info_package" | sed -n 's/.*: //; 7p') &&
+    info_package=$(echo "$info_package" | sed '7d')
+
+  package_depend=$(echo "$info_package" | sed -n '/^[ \t]/p; 7,8p') &&
+    info_package=$(echo "$info_package" | sed -n '7,8d; /^[ \t]/!p')
+
+  package_conflict="$(echo "$info_package" | sed -n 's/.*: //; 7p')" &&
+    info_package=$(echo "$info_package" | sed '7d')
+
+  package_replaces=$(echo "$info_package" | sed -n 's/.*: //; 7p') &&
+    info_package=$(echo "$info_package" | sed '7d')
+}
+
+# Show package information window
+# RETURNS: window with the package information
+MainDialog() {
+  # get header main dialog
+  header="<b>$(gettext "Package information")</b>\\n\\n"
+  header=${header}"\\t$pack_type\\t<i>$pack_name</i>\\n"
+  header=${header}"\\t$(gettext "description")\\t$package_description\\n"
+
+  # main dialog
+  yad --css "$tab_style" --key "$key" --title "$(gettext "Package Info")" \
+    --width 800 --height 600 --text "$header" --button "yad-close:1" \
+    --notebook \
+    --tab "$(gettext "Info")" \
+    --tab "$(gettext "Provides")" \
+    --tab "$(gettext "Depends")" \
+    --tab "$(gettext "Conflicts")" \
+    --tab "$(gettext "Replaces")" \
+    --tab "$(gettext "Files")"
+
+  exitCode=$?
+  [[ $exitCode -eq 1 ]] || [[ $exitCode -eq 252 ]] && exitCode=0
+  Exit "$exitCode"
+}
+
+# Clean up the trash before you go out.
+Cleaning() {
+  if [[ -f "$tmp_file" ]]; then rm "$tmp_file"; fi
+  kill "$key"
+}
+
+# Output with specified code and error message.
+# ARGUMENTS:  [$1] error code (optional)
+#             [$2] error message (optional)
+# RETURNS:    exit
+Exit() {
+  if [ $# -ge 1 ] && [ -n "$1" ] && [ "$1" -eq "$1" ] 2>/dev/null; then
+    exitCode="$1"
+    shift
+  fi
+
+  if [ $# -ge 1 ]; then printf '%b\n' "$@" 1>&2; fi
+  exit "${exitCode:-1}"
+}
+
+# MAIN BLOCK
+Init "$@"
+ParsePackageInfo "$pkg_name"
+
+#   INFORMATION TAB
+# info tab
+echo "$info_package" | sed -r "s/^[ ]/ :/; s/[<>]//g; s/:[ ]*/\n/" |
+  yad --plug "$key" --tabnum 1 --list --grid-lines vert --print-column 1 \
+    --dclick-action 'OpenPageOrEmail %s' \
+    --image package-x-generic --text "$(gettext "Package info")" \
+    --no-headers --column "$(gettext "name")" --column "$(gettext "description")" &
+
+# provides tab
+echo "$package_provides" | sed 's/ \{1,\}/\n/g' |
+  yad --plug "$key" --tabnum 2 \
+    --list --no-selection --grid-lines hor --no-headers \
+    --image package-x-generic --text "$(gettext "Package provides")" \
+    --column "$(gettext "package")" &
+
+# depends tab
+echo "$package_depend" | sed 's/^[ ]/ :/; s/:[ ]*/\n/; s/  /\n\n/6g' |
+  yad --plug "$key" --tabnum 3 \
+    --list --no-selection --grid-lines vert --no-headers \
+    --image package-x-generic --text "$(gettext "Package dependencies")" \
+    --column "$(gettext "name")" --column "$(gettext "description")" &
+
+# conflict tab
+echo "$package_conflict" | sed 's/ \{1,\}/\n/g' |
+  yad --plug "$key" --tabnum 4 \
+    --list --no-selection --grid-lines hor --no-headers \
+    --image package-x-generic --text "$(gettext "Conflicts with")" \
+    --column "$(gettext "package")" &
+
+# replaces tab
+echo "$package_replaces" | sed 's/ \{1,\}/\n/g' |
+  yad --plug "$key" --tabnum 5 \
+    --list --no-selection --grid-lines hor --no-headers \
+    --image package-x-generic --text "$(gettext "Package replaces")" \
+    --column "$(gettext "package")" &
+
+# files tab
+# echo "$files_package" | sed -e 's/^[^ ]*\(.*\)$/\1/' |
+sed -e 's/^[^ ]*\(.*\)$/\1/' "$tmp_file" |
+  yad --plug "$key" --tabnum 6 \
+    --list --no-selection --grid-lines hor --no-headers \
+    --image folder --text "$(gettext "File list package")" \
+    --column "$(gettext "files")" &
+
+#   MAIN WINDOW
+MainDialog

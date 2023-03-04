@@ -3,19 +3,18 @@
 # This file is distributed under the same license as the pkg-info package.
 # VlaSard <vlasard@petalmail.com>, 2023.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: pkg-info\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-03-04 10:38+0200\n"
-"PO-Revision-Date: 2023-03-04 11:07+0200\n"
-"Last-Translator: Vladimir Sarachan <sarachanvv@gmail.com>\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: VlaSard <vlasard@petamail.com>\n"
-"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.2.2\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: ../bin\n"
@@ -23,125 +22,125 @@ msgstr ""
 
 #: bin/pkg-info:90
 msgid "missing dependencies. Install the following"
-msgstr "недостающие зависимости. Установите следующее"
+msgstr ""
 
 #: bin/pkg-info:128
 msgid "Usage"
-msgstr "Вызов"
+msgstr ""
 
 #: bin/pkg-info:128
 msgid "[options]"
-msgstr "[опции]"
+msgstr ""
 
 #: bin/pkg-info:129
 msgid "Options"
-msgstr "Опции"
+msgstr ""
 
 #: bin/pkg-info:130
 msgid "read package information from the package file"
-msgstr "прочитать информацию о пакете из файла пакета"
+msgstr ""
 
 #: bin/pkg-info:131
 msgid "display this help and exit"
-msgstr "показать эту справку и выйти"
+msgstr ""
 
 #: bin/pkg-info:132
 msgid "output version information and exit"
-msgstr "показать информацию о версии и выйти"
+msgstr ""
 
 #: bin/pkg-info:153
 msgid "pkg-info: missing operand\\nTry «pkg-info --help» for more information."
-msgstr "pkg-info: отсутствующий операнд\\nПо команде «pkg-info --help» для получения дополнительной информации."
+msgstr ""
 
 #: bin/pkg-info:214 bin/pkg-info:216 bin/pkg-info:330 bin/pkg-info:344
 #: bin/pkg-info:351
 msgid "package"
-msgstr "пакет"
+msgstr ""
 
 #: bin/pkg-info:214
 msgid "not found"
-msgstr "не найден"
+msgstr ""
 
 #: bin/pkg-info:221
 msgid "package file"
-msgstr "файл пакета"
+msgstr ""
 
 #: bin/pkg-info:224
 msgid "file not found"
-msgstr "файл не найден"
+msgstr ""
 
 #: bin/pkg-info:231
 msgid "file"
-msgstr "файл"
+msgstr ""
 
 #: bin/pkg-info:231
 msgid "is not a package file."
-msgstr "не является файлом пакета."
+msgstr ""
 
 #: bin/pkg-info:273
 msgid "Package information"
-msgstr "Информация о пакете"
+msgstr ""
 
 #: bin/pkg-info:275 bin/pkg-info:323 bin/pkg-info:337
 msgid "description"
-msgstr "описание"
+msgstr ""
 
 #: bin/pkg-info:278
 msgid "Package Info"
-msgstr "О пакете"
+msgstr ""
 
 #: bin/pkg-info:281
 msgid "Info"
-msgstr "Информация"
+msgstr ""
 
 #: bin/pkg-info:282
 msgid "Provides"
-msgstr "Предоставляет"
+msgstr ""
 
 #: bin/pkg-info:283
 msgid "Depends"
-msgstr "Зависимости"
+msgstr ""
 
 #: bin/pkg-info:284
 msgid "Conflicts"
-msgstr "Конфликты"
+msgstr ""
 
 #: bin/pkg-info:285
 msgid "Replaces"
-msgstr "Заменяет"
+msgstr ""
 
 #: bin/pkg-info:286
 msgid "Files"
-msgstr "Файлы"
+msgstr ""
 
 #: bin/pkg-info:322
 msgid "Package info"
-msgstr "Общая информация о пакете"
+msgstr ""
 
 #: bin/pkg-info:323 bin/pkg-info:337
 msgid "name"
-msgstr "имя"
+msgstr ""
 
 #: bin/pkg-info:329
 msgid "Package provides"
-msgstr "Пакет предоставляет"
+msgstr ""
 
 #: bin/pkg-info:336
 msgid "Package dependencies"
-msgstr "Зависимости пакета"
+msgstr ""
 
 #: bin/pkg-info:343
 msgid "Conflicts with"
-msgstr "Конфликты пакета"
+msgstr ""
 
 #: bin/pkg-info:350
 msgid "Package replaces"
-msgstr "Пакет заменяет"
+msgstr ""
 
 #: bin/pkg-info:358
 msgid "File list package"
-msgstr "Список файлов в пакете"
+msgstr ""
 
 #: bin/pkg-info:359
 msgid "files"
-msgstr "файлы"
+msgstr ""

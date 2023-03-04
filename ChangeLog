@@ -1,3 +1,10 @@
+2023-03-04 VlaSard
+
+	* bin/pkg-info : renamed the script, updated the structure of the script, added window design, minor additions to the script
+	* po/ : update files
+	* po/ru.po : updated translation
+	* images/ : update files screenshots
+
 2023-01-25  VlaSard
 
 	* images/ : added screenshots
